@@ -1,3 +1,5 @@
+Triforce blitz is a community created randomizer for the video game Legend of Zelda Ocarina of Time. Since it's a randomizer with some correlation, I wanted to look at some of the relevant in-game statistics. 
+
 Triforce Blitz.ipynb is my primary file, which scrapes ~300 json files from the website, then compiles them into a list of structured objects. Then I play around with some sample visualizations.
 
 Shiny test.ipynb selects my favorite visualizations, and compiles them into a Python-Shiny dashboard, with some basic interactivity. This file writes the app.py file, then runs it.
