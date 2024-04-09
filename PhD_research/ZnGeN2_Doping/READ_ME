@@ -1,0 +1,5 @@
+These are calculations primarily related to calculating electronic dopants in ZnGeN2. 
+
+The 'Write Data' File reads directly from a large collection of that are not included here to produce npy data files.
+
+The other notebooks read from the npy files to produce the plots. These files should still be functional. 
