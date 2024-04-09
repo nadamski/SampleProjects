@@ -22,7 +22,7 @@ I've applied machine learning principles to analyze data and make predictions
 
 ## Video Game Dashboards
 
-Sometimes I analyze randomized video games. In this case, I looked at the Triforce Blitz variant of the Legend of Zelda Randomizer. 
+Sometimes I analyze randomized video games. In this case, I looked at the Triforce Blitz variant of the Legend of Zelda Randomizer. I evaluated a 300+ randomized seeds and evaluated some summary statistics. 
 
 The dashboard was built with Python shiny. While this image is not interactive, the code can be downloaded above.
 
