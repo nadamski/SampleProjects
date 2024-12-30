@@ -20,6 +20,15 @@ I've applied machine learning principles to analyze data and make predictions
 ![Salary Histogram](https://github.com/nadamski/SampleProjects/blob/main/SalaryHist.png)
 ![Salary Prediction](https://github.com/nadamski/SampleProjects/blob/main/SalaryPrediction.png)
 
+
+## Creek Flow Calculations
+
+A temporary project calculating Waterflow in the San Luis Obispo watershed. 
+Code available at https://github.com/sud03r/flowdataviz
+
+Demonstration gif by Neeraj Kumar: 
+![SLO Water](https://github.com/sud03r/flowdataviz/blob/main/demo/output.gif)
+
 ## Video Game Dashboards
 
 Sometimes I analyze randomized video games. In this case, I looked at the Triforce Blitz variant of the Legend of Zelda Randomizer. I evaluated a 300+ randomized seeds and evaluated some summary statistics. 
@@ -27,3 +36,6 @@ Sometimes I analyze randomized video games. In this case, I looked at the Trifor
 The dashboard was built with Python shiny. While this image is not interactive, the code can be downloaded above.
 
 ![Triforce](https://github.com/nadamski/SampleProjects/blob/main/triforce_blitz/TriforceBlitzStatistics.png)
+
+
+
