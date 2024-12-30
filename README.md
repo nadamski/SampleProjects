@@ -27,6 +27,7 @@ A temporary project calculating Waterflow in the San Luis Obispo watershed.
 Code available at https://github.com/sud03r/flowdataviz
 
 Demonstration gif by Neeraj Kumar: 
+
 ![SLO Water](https://github.com/sud03r/flowdataviz/blob/main/demo/output.gif)
 
 ## Video Game Dashboards
