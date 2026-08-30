@@ -160,14 +160,14 @@
         <h2>Loan Basics</h2>
         <div class="field">
           <label>Home Price <span class="val" id="priceVal"></span></label>
-          <input type="number" id="price" min="0" step="1000" value="350000">
+          <input type="number" id="price" min="0" step="1000" value="830000">
         </div>
         <div class="field">
           <label>Down Payment <span class="val" id="downVal"></span></label>
           <input type="range" id="downPct" min="0" max="50" step="1" value="20">
           <div class="row-2" style="margin-top:8px;">
             <input type="number" id="downPctNum" min="0" max="100" step="1" value="20">
-            <input type="number" id="downDollar" min="0" step="500" value="70000">
+            <input type="number" id="downDollar" min="0" step="500" value="166000">
           </div>
           <div class="hint">Left: percent down. Right: same amount in dollars — edit either one.</div>
         </div>
@@ -176,12 +176,14 @@
           <select id="term">
             <option value="15">15 years</option>
             <option value="20">20 years</option>
-            <option value="30" selected>30 years</option>
+            <option value="25" selected>25 years</option>
+            <option value="30">30 years</option>
           </select>
         </div>
         <div class="field">
           <label>Interest Rate <span class="val" id="rateVal"></span></label>
-          <input type="range" id="rate" min="2" max="10" step="0.05" value="6.5">
+          <input type="range" id="rate" min="2" max="10" step="0.05" value="4.05">
+          <div class="hint">If your rate is only fixed for an initial period (e.g. a 3-year fixed deal), enter that rate here — it pairs well with "Years Until Sale / Payoff" below if you expect to sell or refinance before it resets.</div>
         </div>
       </div>
 
@@ -207,9 +209,9 @@
           <div class="hint">Assumed return if the same cash were invested (e.g. index funds) instead of put toward the house.</div>
         </div>
         <div class="field">
-          <label>Alternative Down Payment <span class="val" id="altDownVal"></span></label>
+          <label>Compare Against Down Payment Of <span class="val" id="altDownVal"></span></label>
           <input type="range" id="altDownPct" min="0" max="50" step="1" value="5">
-          <div class="hint">Compares putting only this much down (and investing the difference) against the down payment above.</div>
+          <div class="hint">This doesn't change the loan above — it's a hypothetical for the comparison card below: "what if I put down less than my actual down payment, and invested the difference instead?"</div>
         </div>
       </div>
     </div>
@@ -251,7 +253,13 @@
       <div class="card chart-card">
         <h2>Cumulative Interest &amp; Remaining Balance</h2>
         <div class="note">Dashed line marks the year the loan is sold or refinanced.</div>
-        <canvas id="chart" height="260"></canvas>
+        <div style="position:relative; height:300px;">
+          <canvas id="chart"></canvas>
+        </div>
+        <p class="muted-note" id="chartFallback" style="display:none;">
+          Chart couldn't load (the charting library may be blocked by your network or an ad blocker) —
+          the numbers above and below are unaffected.
+        </p>
       </div>
 
       <div class="card" style="margin-top:16px;">
@@ -263,6 +271,7 @@
         <div class="compare">
           <div class="compare-card">
             <h3>Bigger Down Payment vs. Investing the Difference</h3>
+            <p class="muted-note" id="dpSubtitle" style="margin:0 0 8px;">—</p>
             <div class="line"><span>Extra cash put down</span><span class="amt" id="dpDiffCash">—</span></div>
             <div class="line"><span>If invested instead, grows to</span><span class="amt" id="dpFV">—</span></div>
             <div class="line"><span>Extra loan balance owed at sale</span><span class="amt" id="dpExtraBalance">—</span></div>
@@ -425,74 +434,6 @@
       : 'Loan fully paid off by then';
     $('interestSaved').textContent = money(interestSaved);
 
-    // --- chart ---
-    const years = [];
-    const interestSeries = [];
-    const balanceSeries = [];
-    for (let y = 0; y <= termYears; y++) {
-      years.push(y);
-      interestSeries.push(Math.round(valueAt(main.cumInterests, y * 12)));
-      balanceSeries.push(Math.round(valueAt(main.balances, y * 12)));
-    }
-
-    const saleLinePlugin = {
-      id: 'saleLine',
-      afterDraw(c) {
-        const xScale = c.scales.x;
-        const yScale = c.scales.y;
-        if (!xScale || !yScale) return;
-        const x = xScale.getPixelForValue(Math.min(saleYears, termYears));
-        const ctx = c.ctx;
-        ctx.save();
-        ctx.strokeStyle = '#c0392b';
-        ctx.setLineDash([6, 4]);
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(x, yScale.top);
-        ctx.lineTo(x, yScale.bottom);
-        ctx.stroke();
-        ctx.restore();
-      }
-    };
-
-    if (chart) chart.destroy();
-    chart = new Chart($('chart').getContext('2d'), {
-      type: 'line',
-      data: {
-        labels: years,
-        datasets: [
-          {
-            label: 'Cumulative interest paid',
-            data: interestSeries,
-            borderColor: '#2f6fed',
-            backgroundColor: 'rgba(47,111,237,0.12)',
-            fill: true,
-            tension: 0.15,
-            pointRadius: 0,
-          },
-          {
-            label: 'Remaining loan balance',
-            data: balanceSeries,
-            borderColor: '#8b8fa3',
-            backgroundColor: 'transparent',
-            borderDash: [3, 3],
-            tension: 0.15,
-            pointRadius: 0,
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        interaction: { mode: 'index', intersect: false },
-        scales: {
-          x: { title: { display: true, text: 'Years' } },
-          y: { title: { display: true, text: 'Dollars' }, ticks: { callback: (v) => '$' + v.toLocaleString() } }
-        },
-        plugins: { legend: { position: 'bottom' } }
-      },
-      plugins: [saleLinePlugin]
-    });
-
     // --- investing alternative: down payment ---
     const altLoanAmount = Math.max(0, price - price * altDownPct / 100);
     const altSchedule = simulate(altLoanAmount, ratePct, termYears, extraMonthly);
@@ -502,6 +443,7 @@
     const dpExtraBalance = Math.max(0, altBalanceAtSale - balanceAtSale);
     const dpNet = dpFV - dpExtraBalance;
 
+    $('dpSubtitle').textContent = pct(downPct) + ' down (actual) vs. ' + pct(altDownPct) + ' down (hypothetical)';
     $('dpDiffCash').textContent = money(dpDiffCash);
     $('dpFV').textContent = money(dpFV);
     $('dpExtraBalance').textContent = money(dpExtraBalance);
@@ -548,6 +490,82 @@
       const epVerdictEl = $('epVerdict');
       epVerdictEl.textContent = 'Set an extra monthly payment above to compare.';
       epVerdictEl.className = 'verdict';
+    }
+
+    // --- chart (last: isolated so a failure here can't block the results above) ---
+    try {
+      if (typeof Chart === 'undefined') throw new Error('Chart.js failed to load');
+
+      const years = [];
+      const interestSeries = [];
+      const balanceSeries = [];
+      for (let y = 0; y <= termYears; y++) {
+        years.push(y);
+        interestSeries.push(Math.round(valueAt(main.cumInterests, y * 12)));
+        balanceSeries.push(Math.round(valueAt(main.balances, y * 12)));
+      }
+
+      const saleLinePlugin = {
+        id: 'saleLine',
+        afterDraw(c) {
+          const xScale = c.scales.x;
+          const yScale = c.scales.y;
+          if (!xScale || !yScale) return;
+          const x = xScale.getPixelForValue(Math.min(saleYears, termYears));
+          const ctx = c.ctx;
+          ctx.save();
+          ctx.strokeStyle = '#c0392b';
+          ctx.setLineDash([6, 4]);
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(x, yScale.top);
+          ctx.lineTo(x, yScale.bottom);
+          ctx.stroke();
+          ctx.restore();
+        }
+      };
+
+      if (chart) chart.destroy();
+      chart = new Chart($('chart').getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: years,
+          datasets: [
+            {
+              label: 'Cumulative interest paid',
+              data: interestSeries,
+              borderColor: '#2f6fed',
+              backgroundColor: 'rgba(47,111,237,0.12)',
+              fill: true,
+              tension: 0.15,
+              pointRadius: 0,
+            },
+            {
+              label: 'Remaining loan balance',
+              data: balanceSeries,
+              borderColor: '#8b8fa3',
+              backgroundColor: 'transparent',
+              borderDash: [3, 3],
+              tension: 0.15,
+              pointRadius: 0,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          scales: {
+            x: { title: { display: true, text: 'Years' } },
+            y: { title: { display: true, text: 'Dollars' }, ticks: { callback: (v) => '$' + v.toLocaleString() } }
+          },
+          plugins: { legend: { position: 'bottom' } }
+        },
+        plugins: [saleLinePlugin]
+      });
+      $('chartFallback').style.display = 'none';
+    } catch (err) {
+      $('chartFallback').style.display = 'block';
     }
   }
 
