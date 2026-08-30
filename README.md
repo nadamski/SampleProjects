@@ -30,6 +30,21 @@ Demonstration gif by Neeraj Kumar:
 
 ![SLO Water](https://github.com/sud03r/flowdataviz/blob/main/demo/output.gif)
 
+## Mortgage Payoff Calculator
+
+A small interactive dashboard for exploring how home price, down payment, interest rate, and
+loan term affect the total interest paid on a mortgage — including what happens if the loan is
+paid off early (e.g. the home is sold a few years into the term), and whether it's better to put
+extra cash toward the mortgage or invest it instead.
+
+It's a single self-contained HTML page (vanilla JS + [Chart.js](https://www.chartjs.org/)), so it
+runs entirely in the browser with no backend, and is set up to be served directly via GitHub Pages
+from the [`docs/`](docs/) folder.
+
+**Live demo:** enable GitHub Pages for this repo (Settings → Pages → Source: `main` branch, folder
+`/docs`), then visit `https://<your-username>.github.io/SampleProjects/`. To try it locally, just
+open [`docs/index.html`](docs/index.html) in a browser.
+
 ## Video Game Dashboards
 
 Sometimes I analyze randomized video games. In this case, I looked at the Triforce Blitz variant of the Legend of Zelda Randomizer. I evaluated a 300+ randomized seeds and evaluated some summary statistics. 
