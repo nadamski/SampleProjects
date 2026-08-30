@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mortgage Payoff Calculator</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --card: #ffffff;
+    --text: #1c2230;
+    --muted: #626b7a;
+    --border: #e2e5ec;
+    --accent: #2f6fed;
+    --accent-soft: #e8f0fe;
+    --good: #1a8a5f;
+    --bad: #c0392b;
+    --shadow: 0 1px 2px rgba(20, 25, 40, 0.06), 0 8px 24px rgba(20, 25, 40, 0.05);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.45;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 24px 20px 60px; }
+  header { margin-bottom: 20px; }
+  header h1 { font-size: 1.6rem; margin: 0 0 6px; }
+  header p { margin: 0; color: var(--muted); max-width: 720px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 860px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+  }
+  .card + .card { margin-top: 16px; }
+
+  .card h2 {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin: 0 0 14px;
+  }
+
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .field label .val { font-weight: 600; color: var(--accent); }
+  .field .hint { font-size: 0.76rem; color: var(--muted); margin-top: 4px; }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+  }
+  input[type="number"], select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: #fff;
+    color: var(--text);
+  }
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+  }
+  .stat .label { font-size: 0.76rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .stat .value { font-size: 1.35rem; font-weight: 700; margin-top: 4px; }
+  .stat .sub { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .stat.highlight { border-color: var(--accent); background: var(--accent-soft); }
+  .stat.good .value { color: var(--good); }
+  .stat.bad .value { color: var(--bad); }
+
+  .chart-card { padding: 18px 20px 8px; }
+  .chart-card h2 { margin-bottom: 4px; }
+  .chart-card .note { font-size: 0.78rem; color: var(--muted); margin-bottom: 10px; }
+  canvas { max-width: 100%; }
+
+  .compare {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+  }
+  .compare-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    background: #fbfbfd;
+  }
+  .compare-card h3 { margin: 0 0 8px; font-size: 0.92rem; }
+  .compare-card .line { display: flex; justify-content: space-between; font-size: 0.86rem; margin-bottom: 4px; }
+  .compare-card .line .amt { font-weight: 600; }
+  .compare-card .verdict {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+    font-size: 0.88rem;
+    font-weight: 700;
+  }
+  .compare-card .verdict.good { color: var(--good); }
+  .compare-card .verdict.bad { color: var(--bad); }
+  .muted-note { color: var(--muted); font-size: 0.82rem; }
+
+  footer {
+    margin-top: 28px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Mortgage Payoff Calculator</h1>
+    <p>
+      Model how home price, down payment, interest rate, and loan term affect total interest —
+      and see what happens if the mortgage is paid off early (e.g. the home is sold a few years in).
+      Also compares tying up cash in the mortgage versus investing it instead.
+    </p>
+  </header>
+
+  <div class="grid">
+    <!-- CONTROLS -->
+    <div class="controls">
+      <div class="card">
+        <h2>Loan Basics</h2>
+        <div class="field">
+          <label>Home Price <span class="val" id="priceVal"></span></label>
+          <input type="number" id="price" min="0" step="1000" value="350000">
+        </div>
+        <div class="field">
+          <label>Down Payment <span class="val" id="downVal"></span></label>
+          <input type="range" id="downPct" min="0" max="50" step="1" value="20">
+          <div class="row-2" style="margin-top:8px;">
+            <input type="number" id="downPctNum" min="0" max="100" step="1" value="20">
+            <input type="number" id="downDollar" min="0" step="500" value="70000">
+          </div>
+          <div class="hint">Left: percent down. Right: same amount in dollars — edit either one.</div>
+        </div>
+        <div class="field">
+          <label>Loan Term</label>
+          <select id="term">
+            <option value="15">15 years</option>
+            <option value="20">20 years</option>
+            <option value="30" selected>30 years</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Interest Rate <span class="val" id="rateVal"></span></label>
+          <input type="range" id="rate" min="2" max="10" step="0.05" value="6.5">
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Early Payoff Plan</h2>
+        <div class="field">
+          <label>Extra Monthly Payment <span class="val" id="extraVal"></span></label>
+          <input type="range" id="extra" min="0" max="1500" step="25" value="0">
+          <div class="hint">Optional extra principal payment each month, on top of the required payment.</div>
+        </div>
+        <div class="field">
+          <label>Years Until Sale / Payoff <span class="val" id="saleVal"></span></label>
+          <input type="range" id="saleYears" min="0" max="30" step="1" value="3">
+          <div class="hint">If the home is sold or the loan refinanced at this point, the remaining balance is paid off in full and no further interest accrues.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Investing Alternative</h2>
+        <div class="field">
+          <label>Expected Annual Return <span class="val" id="investVal"></span></label>
+          <input type="range" id="investReturn" min="0" max="12" step="0.25" value="7">
+          <div class="hint">Assumed return if the same cash were invested (e.g. index funds) instead of put toward the house.</div>
+        </div>
+        <div class="field">
+          <label>Alternative Down Payment <span class="val" id="altDownVal"></span></label>
+          <input type="range" id="altDownPct" min="0" max="50" step="1" value="5">
+          <div class="hint">Compares putting only this much down (and investing the difference) against the down payment above.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="results">
+      <div class="results-grid">
+        <div class="stat">
+          <div class="label">Loan Amount</div>
+          <div class="value" id="loanAmount">—</div>
+        </div>
+        <div class="stat">
+          <div class="label">Monthly Payment (P&amp;I)</div>
+          <div class="value" id="monthlyPayment">—</div>
+        </div>
+        <div class="stat">
+          <div class="label">Payoff Timeline</div>
+          <div class="value" id="payoffTime">—</div>
+          <div class="sub" id="payoffNote"></div>
+        </div>
+      </div>
+
+      <div class="results-grid">
+        <div class="stat">
+          <div class="label">Total Interest, Full Term</div>
+          <div class="value" id="interestFull">—</div>
+        </div>
+        <div class="stat highlight">
+          <div class="label">Interest Paid If Sold/Refinanced at Year <span id="saleYearLabel">3</span></div>
+          <div class="value" id="interestAtSale">—</div>
+          <div class="sub" id="balanceAtSale"></div>
+        </div>
+        <div class="stat good">
+          <div class="label">Interest Avoided by Exiting Early</div>
+          <div class="value" id="interestSaved">—</div>
+        </div>
+      </div>
+
+      <div class="card chart-card">
+        <h2>Cumulative Interest &amp; Remaining Balance</h2>
+        <div class="note">Dashed line marks the year the loan is sold or refinanced.</div>
+        <canvas id="chart" height="260"></canvas>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <h2>Cash in the House vs. Cash in the Market</h2>
+        <p class="muted-note" style="margin-top:-6px;">
+          Assumes home price appreciation is the same either way, so only the loan balance and the
+          hypothetical investment account are compared, as of the sale year above.
+        </p>
+        <div class="compare">
+          <div class="compare-card">
+            <h3>Bigger Down Payment vs. Investing the Difference</h3>
+            <div class="line"><span>Extra cash put down</span><span class="amt" id="dpDiffCash">—</span></div>
+            <div class="line"><span>If invested instead, grows to</span><span class="amt" id="dpFV">—</span></div>
+            <div class="line"><span>Extra loan balance owed at sale</span><span class="amt" id="dpExtraBalance">—</span></div>
+            <div class="verdict" id="dpVerdict">—</div>
+          </div>
+          <div class="compare-card" id="extraCard">
+            <h3>Extra Monthly Payments vs. Investing Them</h3>
+            <div class="line"><span>Extra paid toward principal</span><span class="amt" id="epContrib">—</span></div>
+            <div class="line"><span>If invested instead, grows to</span><span class="amt" id="epFV">—</span></div>
+            <div class="line"><span>Extra loan balance owed at sale</span><span class="amt" id="epExtraBalance">—</span></div>
+            <div class="verdict" id="epVerdict">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    This tool is for general educational planning and uses simplified assumptions (fixed rate,
+    no taxes/insurance/PMI/appreciation, constant investment return). It is not financial advice —
+    for a real transaction, confirm numbers with your lender.
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const money = (n) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+  const pct = (n) => n.toFixed(2) + '%';
+
+  const el = {
+    price: $('price'), priceVal: $('priceVal'),
+    downPct: $('downPct'), downPctNum: $('downPctNum'), downDollar: $('downDollar'), downVal: $('downVal'),
+    term: $('term'), rate: $('rate'), rateVal: $('rateVal'),
+    extra: $('extra'), extraVal: $('extraVal'),
+    saleYears: $('saleYears'), saleVal: $('saleVal'),
+    investReturn: $('investReturn'), investVal: $('investVal'),
+    altDownPct: $('altDownPct'), altDownVal: $('altDownVal'),
+  };
+
+  // --- keep down-payment % and $ in sync ---
+  function syncDownFromPct(pctValue) {
+    const price = parseFloat(el.price.value) || 0;
+    const p = Math.max(0, Math.min(100, pctValue));
+    el.downPct.value = p;
+    el.downPctNum.value = p;
+    el.downDollar.value = Math.round(price * p / 100);
+  }
+  function syncDownFromDollar(dollarValue) {
+    const price = parseFloat(el.price.value) || 1;
+    const d = Math.max(0, dollarValue);
+    const p = price > 0 ? (d / price) * 100 : 0;
+    el.downPct.value = Math.max(0, Math.min(100, p));
+    el.downPctNum.value = el.downPct.value;
+    el.downDollar.value = Math.round(d);
+  }
+
+  el.downPct.addEventListener('input', () => { syncDownFromPct(parseFloat(el.downPct.value)); update(); });
+  el.downPctNum.addEventListener('input', () => { syncDownFromPct(parseFloat(el.downPctNum.value) || 0); update(); });
+  el.downDollar.addEventListener('input', () => { syncDownFromDollar(parseFloat(el.downDollar.value) || 0); update(); });
+  el.price.addEventListener('input', () => { syncDownFromPct(parseFloat(el.downPct.value)); update(); });
+
+  [el.term, el.rate, el.extra, el.saleYears, el.investReturn, el.altDownPct].forEach((node) => {
+    node.addEventListener('input', update);
+  });
+
+  // --- amortization simulation ---
+  function monthlyPayment(principal, annualRatePct, termYears) {
+    const r = annualRatePct / 100 / 12;
+    const n = termYears * 12;
+    if (r === 0) return principal / n;
+    return principal * r / (1 - Math.pow(1 + r, -n));
+  }
+
+  // Returns arrays indexed by month (0 = start), each entry = balance & cumulative interest AFTER that month's payment.
+  function simulate(principal, annualRatePct, termYears, extraMonthly) {
+    const r = annualRatePct / 100 / 12;
+    const n = termYears * 12;
+    const payment = monthlyPayment(principal, annualRatePct, termYears);
+    let balance = principal;
+    let cumInterest = 0;
+    const balances = [balance];
+    const cumInterests = [0];
+    let payoffMonth = n;
+    for (let m = 1; m <= n; m++) {
+      const interest = balance * r;
+      let principalPortion = payment - interest + extraMonthly;
+      if (principalPortion > balance) principalPortion = balance;
+      balance = Math.max(0, balance - principalPortion);
+      cumInterest += interest;
+      balances.push(balance);
+      cumInterests.push(cumInterest);
+      if (balance <= 0) { payoffMonth = m; break; }
+    }
+    return { balances, cumInterests, payoffMonth, payment };
+  }
+
+  function valueAt(arr, month) {
+    const idx = Math.min(month, arr.length - 1);
+    return arr[idx];
+  }
+
+  function futureValueLumpSum(amount, annualRatePct, years) {
+    const r = annualRatePct / 100 / 12;
+    const n = years * 12;
+    return amount * Math.pow(1 + r, n);
+  }
+
+  function futureValueAnnuity(monthlyAmount, annualRatePct, months) {
+    if (months <= 0) return 0;
+    const r = annualRatePct / 100 / 12;
+    if (r === 0) return monthlyAmount * months;
+    return monthlyAmount * ((Math.pow(1 + r, months) - 1) / r);
+  }
+
+  let chart;
+
+  function update() {
+    const price = parseFloat(el.price.value) || 0;
+    const downPct = parseFloat(el.downPct.value) || 0;
+    const termYears = parseFloat(el.term.value);
+    const ratePct = parseFloat(el.rate.value);
+    const extraMonthly = parseFloat(el.extra.value) || 0;
+    const saleYears = parseFloat(el.saleYears.value);
+    const investReturnPct = parseFloat(el.investReturn.value);
+    let altDownPct = parseFloat(el.altDownPct.value) || 0;
+    if (altDownPct > downPct) altDownPct = downPct;
+
+    el.priceVal.textContent = money(price);
+    el.downVal.textContent = pct(downPct) + ' (' + money(price * downPct / 100) + ')';
+    el.rateVal.textContent = pct(ratePct);
+    el.extraVal.textContent = money(extraMonthly) + '/mo';
+    el.saleVal.textContent = saleYears + (saleYears === 1 ? ' year' : ' years');
+    el.investVal.textContent = pct(investReturnPct) + '/yr';
+    el.altDownVal.textContent = pct(altDownPct) + ' (' + money(price * altDownPct / 100) + ')';
+    $('saleYearLabel').textContent = saleYears;
+
+    const loanAmount = Math.max(0, price - price * downPct / 100);
+    const saleMonth = saleYears * 12;
+
+    const main = simulate(loanAmount, ratePct, termYears, extraMonthly);
+    const totalInterestFull = main.cumInterests[main.payoffMonth];
+    const interestAtSale = valueAt(main.cumInterests, saleMonth);
+    const balanceAtSale = valueAt(main.balances, saleMonth);
+    const interestSaved = totalInterestFull - interestAtSale;
+
+    $('loanAmount').textContent = money(loanAmount);
+    $('monthlyPayment').textContent = money(main.payment) + (extraMonthly > 0 ? ' + ' + money(extraMonthly) + ' extra' : '');
+    const payoffYears = main.payoffMonth / 12;
+    $('payoffTime').textContent = payoffYears.toFixed(payoffYears % 1 === 0 ? 0 : 1) + ' years';
+    $('payoffNote').textContent = main.payoffMonth < termYears * 12
+      ? 'Paid off early thanks to extra payments (' + (termYears * 12 - main.payoffMonth) + ' fewer months)'
+      : 'Full ' + termYears + '-year term';
+
+    $('interestFull').textContent = money(totalInterestFull);
+    $('interestAtSale').textContent = money(interestAtSale);
+    $('balanceAtSale').textContent = saleMonth < main.payoffMonth
+      ? money(balanceAtSale) + ' balance still owed at sale'
+      : 'Loan fully paid off by then';
+    $('interestSaved').textContent = money(interestSaved);
+
+    // --- chart ---
+    const years = [];
+    const interestSeries = [];
+    const balanceSeries = [];
+    for (let y = 0; y <= termYears; y++) {
+      years.push(y);
+      interestSeries.push(Math.round(valueAt(main.cumInterests, y * 12)));
+      balanceSeries.push(Math.round(valueAt(main.balances, y * 12)));
+    }
+
+    const saleLinePlugin = {
+      id: 'saleLine',
+      afterDraw(c) {
+        const xScale = c.scales.x;
+        const yScale = c.scales.y;
+        if (!xScale || !yScale) return;
+        const x = xScale.getPixelForValue(Math.min(saleYears, termYears));
+        const ctx = c.ctx;
+        ctx.save();
+        ctx.strokeStyle = '#c0392b';
+        ctx.setLineDash([6, 4]);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(x, yScale.top);
+        ctx.lineTo(x, yScale.bottom);
+        ctx.stroke();
+        ctx.restore();
+      }
+    };
+
+    if (chart) chart.destroy();
+    chart = new Chart($('chart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: years,
+        datasets: [
+          {
+            label: 'Cumulative interest paid',
+            data: interestSeries,
+            borderColor: '#2f6fed',
+            backgroundColor: 'rgba(47,111,237,0.12)',
+            fill: true,
+            tension: 0.15,
+            pointRadius: 0,
+          },
+          {
+            label: 'Remaining loan balance',
+            data: balanceSeries,
+            borderColor: '#8b8fa3',
+            backgroundColor: 'transparent',
+            borderDash: [3, 3],
+            tension: 0.15,
+            pointRadius: 0,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        scales: {
+          x: { title: { display: true, text: 'Years' } },
+          y: { title: { display: true, text: 'Dollars' }, ticks: { callback: (v) => '$' + v.toLocaleString() } }
+        },
+        plugins: { legend: { position: 'bottom' } }
+      },
+      plugins: [saleLinePlugin]
+    });
+
+    // --- investing alternative: down payment ---
+    const altLoanAmount = Math.max(0, price - price * altDownPct / 100);
+    const altSchedule = simulate(altLoanAmount, ratePct, termYears, extraMonthly);
+    const dpDiffCash = price * downPct / 100 - price * altDownPct / 100; // extra cash actually put down vs. alt
+    const dpFV = futureValueLumpSum(dpDiffCash, investReturnPct, saleYears);
+    const altBalanceAtSale = valueAt(altSchedule.balances, saleMonth);
+    const dpExtraBalance = Math.max(0, altBalanceAtSale - balanceAtSale);
+    const dpNet = dpFV - dpExtraBalance;
+
+    $('dpDiffCash').textContent = money(dpDiffCash);
+    $('dpFV').textContent = money(dpFV);
+    $('dpExtraBalance').textContent = money(dpExtraBalance);
+    const dpVerdictEl = $('dpVerdict');
+    if (dpDiffCash <= 0) {
+      dpVerdictEl.textContent = 'No difference — down payments are equal.';
+      dpVerdictEl.className = 'verdict';
+    } else if (dpNet > 0) {
+      dpVerdictEl.textContent = 'Investing the difference comes out ahead by ' + money(dpNet);
+      dpVerdictEl.className = 'verdict good';
+    } else {
+      dpVerdictEl.textContent = 'The larger down payment comes out ahead by ' + money(-dpNet);
+      dpVerdictEl.className = 'verdict bad';
+    }
+
+    // --- investing alternative: extra monthly payments ---
+    const extraCardEl = $('extraCard');
+    if (extraMonthly > 0) {
+      extraCardEl.style.opacity = '1';
+      const noExtra = simulate(loanAmount, ratePct, termYears, 0);
+      const contribMonths = Math.min(saleMonth, main.payoffMonth);
+      const epFV = futureValueAnnuity(extraMonthly, investReturnPct, contribMonths);
+      const noExtraBalanceAtSale = valueAt(noExtra.balances, saleMonth);
+      const epExtraBalance = Math.max(0, noExtraBalanceAtSale - balanceAtSale);
+      const epNet = epFV - epExtraBalance;
+      const epContrib = extraMonthly * contribMonths;
+
+      $('epContrib').textContent = money(epContrib);
+      $('epFV').textContent = money(epFV);
+      $('epExtraBalance').textContent = money(epExtraBalance);
+      const epVerdictEl = $('epVerdict');
+      if (epNet > 0) {
+        epVerdictEl.textContent = 'Investing instead comes out ahead by ' + money(epNet);
+        epVerdictEl.className = 'verdict good';
+      } else {
+        epVerdictEl.textContent = 'Prepaying the mortgage comes out ahead by ' + money(-epNet);
+        epVerdictEl.className = 'verdict bad';
+      }
+    } else {
+      extraCardEl.style.opacity = '0.5';
+      $('epContrib').textContent = '$0';
+      $('epFV').textContent = '$0';
+      $('epExtraBalance').textContent = '$0';
+      const epVerdictEl = $('epVerdict');
+      epVerdictEl.textContent = 'Set an extra monthly payment above to compare.';
+      epVerdictEl.className = 'verdict';
+    }
+  }
+
+  // init
+  syncDownFromPct(parseFloat(el.downPct.value));
+  update();
+})();
+</script>
+</body>
+</html>
