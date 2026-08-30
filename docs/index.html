@@ -84,25 +84,22 @@
   }
   .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-  .results-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-    gap: 12px;
-    margin-bottom: 16px;
+  .stat-card { margin-bottom: 16px; }
+  .stat-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 0;
   }
-  .stat {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px 16px;
-    box-shadow: var(--shadow);
+  .stat-item {
+    flex: 1 1 170px;
+    padding: 0 20px;
+    border-left: 1px solid var(--border);
   }
-  .stat .label { font-size: 0.76rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
-  .stat .value { font-size: 1.35rem; font-weight: 700; margin-top: 4px; }
-  .stat .sub { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
-  .stat.highlight { border-color: var(--accent); background: var(--accent-soft); }
-  .stat.good .value { color: var(--good); }
-  .stat.bad .value { color: var(--bad); }
+  .stat-item:first-child { padding-left: 0; border-left: none; }
+  .stat-item.highlight { border-left: 3px solid var(--accent); }
+  .stat-item .label { font-size: 0.76rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .stat-item .value { font-size: 1.35rem; font-weight: 700; margin-top: 4px; }
+  .stat-item .sub { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
 
   .chart-card { padding: 18px 20px 8px; }
   .chart-card h2 { margin-bottom: 4px; }
@@ -146,11 +143,6 @@
 <div class="wrap">
   <header>
     <h1>Mortgage Payoff Calculator</h1>
-    <p>
-      Model how home price, down payment, interest rate, and loan term affect total interest —
-      and see what happens if the mortgage is paid off early (e.g. the home is sold a few years in).
-      Also compares tying up cash in the mortgage versus investing it instead.
-    </p>
   </header>
 
   <div class="grid">
@@ -218,35 +210,25 @@
 
     <!-- RESULTS -->
     <div class="results">
-      <div class="results-grid">
-        <div class="stat">
-          <div class="label">Loan Amount</div>
-          <div class="value" id="loanAmount">—</div>
-        </div>
-        <div class="stat">
-          <div class="label">Monthly Payment (P&amp;I)</div>
-          <div class="value" id="monthlyPayment">—</div>
-        </div>
-        <div class="stat">
-          <div class="label">Payoff Timeline</div>
-          <div class="value" id="payoffTime">—</div>
-          <div class="sub" id="payoffNote"></div>
-        </div>
-      </div>
-
-      <div class="results-grid">
-        <div class="stat">
-          <div class="label">Total Interest, Full Term</div>
-          <div class="value" id="interestFull">—</div>
-        </div>
-        <div class="stat highlight">
-          <div class="label">Interest Paid If Sold/Refinanced at Year <span id="saleYearLabel">3</span></div>
-          <div class="value" id="interestAtSale">—</div>
-          <div class="sub" id="balanceAtSale"></div>
-        </div>
-        <div class="stat good">
-          <div class="label">Interest Avoided by Exiting Early</div>
-          <div class="value" id="interestSaved">—</div>
+      <div class="card stat-card">
+        <div class="stat-row">
+          <div class="stat-item">
+            <div class="label">Loan Amount</div>
+            <div class="value" id="loanAmount">—</div>
+          </div>
+          <div class="stat-item">
+            <div class="label">Monthly Payment (P&amp;I)</div>
+            <div class="value" id="monthlyPayment">—</div>
+          </div>
+          <div class="stat-item">
+            <div class="label">Total Interest, Full Term</div>
+            <div class="value" id="interestFull">—</div>
+          </div>
+          <div class="stat-item highlight">
+            <div class="label">Interest Paid If Sold/Refinanced at Year <span id="saleYearLabel">3</span></div>
+            <div class="value" id="interestAtSale">—</div>
+            <div class="sub" id="balanceAtSale"></div>
+          </div>
         </div>
       </div>
 
@@ -417,22 +399,14 @@
     const totalInterestFull = main.cumInterests[main.payoffMonth];
     const interestAtSale = valueAt(main.cumInterests, saleMonth);
     const balanceAtSale = valueAt(main.balances, saleMonth);
-    const interestSaved = totalInterestFull - interestAtSale;
 
     $('loanAmount').textContent = money(loanAmount);
     $('monthlyPayment').textContent = money(main.payment) + (extraMonthly > 0 ? ' + ' + money(extraMonthly) + ' extra' : '');
-    const payoffYears = main.payoffMonth / 12;
-    $('payoffTime').textContent = payoffYears.toFixed(payoffYears % 1 === 0 ? 0 : 1) + ' years';
-    $('payoffNote').textContent = main.payoffMonth < termYears * 12
-      ? 'Paid off early thanks to extra payments (' + (termYears * 12 - main.payoffMonth) + ' fewer months)'
-      : 'Full ' + termYears + '-year term';
-
     $('interestFull').textContent = money(totalInterestFull);
     $('interestAtSale').textContent = money(interestAtSale);
     $('balanceAtSale').textContent = saleMonth < main.payoffMonth
       ? money(balanceAtSale) + ' balance still owed at sale'
       : 'Loan fully paid off by then';
-    $('interestSaved').textContent = money(interestSaved);
 
     // --- investing alternative: down payment ---
     const altLoanAmount = Math.max(0, price - price * altDownPct / 100);
