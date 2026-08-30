@@ -108,6 +108,18 @@
 
   .muted-note { color: var(--muted); font-size: 0.82rem; }
 
+  .rate-compare {
+    margin-top: 4px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .rate-compare.good { background: rgba(26,138,95,0.1); color: var(--good); }
+  .rate-compare.bad { background: rgba(192,57,43,0.1); color: var(--bad); }
+
   footer {
     margin-top: 28px;
     font-size: 0.78rem;
@@ -158,6 +170,7 @@
           <label>Annual Stock Return <span class="val" id="investVal"></span></label>
           <input type="range" id="investReturn" min="0" max="12" step="0.25" value="7">
           <div class="hint">Assumed return on cash invested instead of put toward the house (e.g. index funds) — drives the chart below.</div>
+          <div class="rate-compare" id="rateCompare"></div>
         </div>
       </div>
 
@@ -320,6 +333,18 @@
     el.investVal.textContent = pct(investReturnPct) + '/yr';
     $('saleYearLabel').textContent = saleYears;
 
+    const rateCompareEl = $('rateCompare');
+    if (ratePct > investReturnPct) {
+      rateCompareEl.textContent = 'Mortgage rate (' + pct(ratePct) + ') is higher than the assumed stock return (' + pct(investReturnPct) + ') — borrowing to keep cash invested tends to lose money here, especially if you sell early. See the chart below.';
+      rateCompareEl.className = 'rate-compare bad';
+    } else if (ratePct < investReturnPct) {
+      rateCompareEl.textContent = 'Mortgage rate (' + pct(ratePct) + ') is lower than the assumed stock return (' + pct(investReturnPct) + ') — borrowing to keep cash invested tends to come out ahead here. See the chart below.';
+      rateCompareEl.className = 'rate-compare good';
+    } else {
+      rateCompareEl.textContent = 'Mortgage rate and assumed stock return are equal — roughly a wash before fees and taxes.';
+      rateCompareEl.className = 'rate-compare';
+    }
+
     const loanAmount = Math.max(0, price - price * downPct / 100);
     const saleMonth = saleYears * 12;
 
@@ -341,8 +366,11 @@
       if (typeof Chart === 'undefined') throw new Error('Chart.js failed to load');
 
       // Net financial position vs. paying cash outright: invested lump sum
-      // (the cash freed up by financing instead of paying cash) minus the
-      // remaining loan balance, both evaluated at each year.
+      // (the cash freed up by financing instead of paying cash), minus the
+      // remaining loan balance, minus interest paid so far (a real cost with
+      // no offsetting asset — without it, every fixed-rate loan reaches $0
+      // balance by the end of its term regardless of rate, which would hide
+      // a mortgage rate higher than the investment return).
       function netPosition(downPaymentPct) {
         const loan = Math.max(0, price - price * downPaymentPct / 100);
         const schedule = downPaymentPct === downPct ? main : simulate(loan, ratePct, termYears);
@@ -350,7 +378,8 @@
         for (let y = 0; y <= termYears; y++) {
           const invested = futureValueLumpSum(loan, investReturnPct, y);
           const remaining = valueAt(schedule.balances, y * 12);
-          series.push(Math.round(invested - remaining));
+          const interestPaid = valueAt(schedule.cumInterests, y * 12);
+          series.push(Math.round(invested - remaining - interestPaid));
         }
         return series;
       }
