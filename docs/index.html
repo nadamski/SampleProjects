@@ -106,29 +106,6 @@
   .chart-card .note { font-size: 0.78rem; color: var(--muted); margin-bottom: 10px; }
   canvas { max-width: 100%; }
 
-  .compare {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 14px;
-  }
-  .compare-card {
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 16px;
-    background: #fbfbfd;
-  }
-  .compare-card h3 { margin: 0 0 8px; font-size: 0.92rem; }
-  .compare-card .line { display: flex; justify-content: space-between; font-size: 0.86rem; margin-bottom: 4px; }
-  .compare-card .line .amt { font-weight: 600; }
-  .compare-card .verdict {
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px dashed var(--border);
-    font-size: 0.88rem;
-    font-weight: 700;
-  }
-  .compare-card .verdict.good { color: var(--good); }
-  .compare-card .verdict.bad { color: var(--bad); }
   .muted-note { color: var(--muted); font-size: 0.82rem; }
 
   footer {
@@ -180,30 +157,11 @@
       </div>
 
       <div class="card">
-        <h2>Early Payoff Plan</h2>
-        <div class="field">
-          <label>Extra Monthly Payment <span class="val" id="extraVal"></span></label>
-          <input type="range" id="extra" min="0" max="1500" step="25" value="0">
-          <div class="hint">Optional extra principal payment each month, on top of the required payment.</div>
-        </div>
+        <h2>Sale Timeline</h2>
         <div class="field">
           <label>Years Until Sale / Payoff <span class="val" id="saleVal"></span></label>
           <input type="range" id="saleYears" min="0" max="30" step="1" value="3">
           <div class="hint">If the home is sold or the loan refinanced at this point, the remaining balance is paid off in full and no further interest accrues.</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Investing Alternative</h2>
-        <div class="field">
-          <label>Expected Annual Return <span class="val" id="investVal"></span></label>
-          <input type="range" id="investReturn" min="0" max="12" step="0.25" value="7">
-          <div class="hint">Assumed return if the same cash were invested (e.g. index funds) instead of put toward the house.</div>
-        </div>
-        <div class="field">
-          <label>Compare Against Down Payment Of <span class="val" id="altDownVal"></span></label>
-          <input type="range" id="altDownPct" min="0" max="50" step="1" value="5">
-          <div class="hint">This doesn't change the loan above — it's a hypothetical for the comparison card below: "what if I put down less than my actual down payment, and invested the difference instead?"</div>
         </div>
       </div>
     </div>
@@ -233,39 +191,23 @@
       </div>
 
       <div class="card chart-card">
-        <h2>Cumulative Interest &amp; Remaining Balance</h2>
-        <div class="note">Dashed line marks the year the loan is sold or refinanced.</div>
+        <h2>Buying Outright vs. Financing &amp; Investing</h2>
+        <div class="note">
+          Each line assumes the cash not spent on a bigger down payment is invested instead, at the
+          return below. Positive means that strategy has pulled ahead of paying cash outright; the
+          dashed vertical line marks your sale year.
+        </div>
         <div style="position:relative; height:300px;">
           <canvas id="chart"></canvas>
         </div>
         <p class="muted-note" id="chartFallback" style="display:none;">
           Chart couldn't load (the charting library may be blocked by your network or an ad blocker) —
-          the numbers above and below are unaffected.
+          the numbers above are unaffected.
         </p>
-      </div>
-
-      <div class="card" style="margin-top:16px;">
-        <h2>Cash in the House vs. Cash in the Market</h2>
-        <p class="muted-note" style="margin-top:-6px;">
-          Assumes home price appreciation is the same either way, so only the loan balance and the
-          hypothetical investment account are compared, as of the sale year above.
-        </p>
-        <div class="compare">
-          <div class="compare-card">
-            <h3>Bigger Down Payment vs. Investing the Difference</h3>
-            <p class="muted-note" id="dpSubtitle" style="margin:0 0 8px;">—</p>
-            <div class="line"><span>Extra cash put down</span><span class="amt" id="dpDiffCash">—</span></div>
-            <div class="line"><span>If invested instead, grows to</span><span class="amt" id="dpFV">—</span></div>
-            <div class="line"><span>Extra loan balance owed at sale</span><span class="amt" id="dpExtraBalance">—</span></div>
-            <div class="verdict" id="dpVerdict">—</div>
-          </div>
-          <div class="compare-card" id="extraCard">
-            <h3>Extra Monthly Payments vs. Investing Them</h3>
-            <div class="line"><span>Extra paid toward principal</span><span class="amt" id="epContrib">—</span></div>
-            <div class="line"><span>If invested instead, grows to</span><span class="amt" id="epFV">—</span></div>
-            <div class="line"><span>Extra loan balance owed at sale</span><span class="amt" id="epExtraBalance">—</span></div>
-            <div class="verdict" id="epVerdict">—</div>
-          </div>
+        <div class="field" style="margin-top:16px;">
+          <label>Expected Annual Return <span class="val" id="investVal"></span></label>
+          <input type="range" id="investReturn" min="0" max="12" step="0.25" value="7">
+          <div class="hint">Assumed return on cash invested instead of put toward the house (e.g. index funds).</div>
         </div>
       </div>
     </div>
@@ -289,10 +231,8 @@
     price: $('price'), priceVal: $('priceVal'),
     downPct: $('downPct'), downPctNum: $('downPctNum'), downDollar: $('downDollar'), downVal: $('downVal'),
     term: $('term'), rate: $('rate'), rateVal: $('rateVal'),
-    extra: $('extra'), extraVal: $('extraVal'),
     saleYears: $('saleYears'), saleVal: $('saleVal'),
     investReturn: $('investReturn'), investVal: $('investVal'),
-    altDownPct: $('altDownPct'), altDownVal: $('altDownVal'),
   };
 
   // --- keep down-payment % and $ in sync ---
@@ -317,7 +257,7 @@
   el.downDollar.addEventListener('input', () => { syncDownFromDollar(parseFloat(el.downDollar.value) || 0); update(); });
   el.price.addEventListener('input', () => { syncDownFromPct(parseFloat(el.downPct.value)); update(); });
 
-  [el.term, el.rate, el.extra, el.saleYears, el.investReturn, el.altDownPct].forEach((node) => {
+  [el.term, el.rate, el.saleYears, el.investReturn].forEach((node) => {
     node.addEventListener('input', update);
   });
 
@@ -330,7 +270,7 @@
   }
 
   // Returns arrays indexed by month (0 = start), each entry = balance & cumulative interest AFTER that month's payment.
-  function simulate(principal, annualRatePct, termYears, extraMonthly) {
+  function simulate(principal, annualRatePct, termYears) {
     const r = annualRatePct / 100 / 12;
     const n = termYears * 12;
     const payment = monthlyPayment(principal, annualRatePct, termYears);
@@ -341,7 +281,7 @@
     let payoffMonth = n;
     for (let m = 1; m <= n; m++) {
       const interest = balance * r;
-      let principalPortion = payment - interest + extraMonthly;
+      let principalPortion = payment - interest;
       if (principalPortion > balance) principalPortion = balance;
       balance = Math.max(0, balance - principalPortion);
       cumInterest += interest;
@@ -363,13 +303,6 @@
     return amount * Math.pow(1 + r, n);
   }
 
-  function futureValueAnnuity(monthlyAmount, annualRatePct, months) {
-    if (months <= 0) return 0;
-    const r = annualRatePct / 100 / 12;
-    if (r === 0) return monthlyAmount * months;
-    return monthlyAmount * ((Math.pow(1 + r, months) - 1) / r);
-  }
-
   let chart;
 
   function update() {
@@ -377,107 +310,56 @@
     const downPct = parseFloat(el.downPct.value) || 0;
     const termYears = parseFloat(el.term.value);
     const ratePct = parseFloat(el.rate.value);
-    const extraMonthly = parseFloat(el.extra.value) || 0;
     const saleYears = parseFloat(el.saleYears.value);
     const investReturnPct = parseFloat(el.investReturn.value);
-    let altDownPct = parseFloat(el.altDownPct.value) || 0;
-    if (altDownPct > downPct) altDownPct = downPct;
 
     el.priceVal.textContent = money(price);
     el.downVal.textContent = pct(downPct) + ' (' + money(price * downPct / 100) + ')';
     el.rateVal.textContent = pct(ratePct);
-    el.extraVal.textContent = money(extraMonthly) + '/mo';
     el.saleVal.textContent = saleYears + (saleYears === 1 ? ' year' : ' years');
     el.investVal.textContent = pct(investReturnPct) + '/yr';
-    el.altDownVal.textContent = pct(altDownPct) + ' (' + money(price * altDownPct / 100) + ')';
     $('saleYearLabel').textContent = saleYears;
 
     const loanAmount = Math.max(0, price - price * downPct / 100);
     const saleMonth = saleYears * 12;
 
-    const main = simulate(loanAmount, ratePct, termYears, extraMonthly);
+    const main = simulate(loanAmount, ratePct, termYears);
     const totalInterestFull = main.cumInterests[main.payoffMonth];
     const interestAtSale = valueAt(main.cumInterests, saleMonth);
     const balanceAtSale = valueAt(main.balances, saleMonth);
 
     $('loanAmount').textContent = money(loanAmount);
-    $('monthlyPayment').textContent = money(main.payment) + (extraMonthly > 0 ? ' + ' + money(extraMonthly) + ' extra' : '');
+    $('monthlyPayment').textContent = money(main.payment);
     $('interestFull').textContent = money(totalInterestFull);
     $('interestAtSale').textContent = money(interestAtSale);
     $('balanceAtSale').textContent = saleMonth < main.payoffMonth
       ? money(balanceAtSale) + ' balance still owed at sale'
       : 'Loan fully paid off by then';
 
-    // --- investing alternative: down payment ---
-    const altLoanAmount = Math.max(0, price - price * altDownPct / 100);
-    const altSchedule = simulate(altLoanAmount, ratePct, termYears, extraMonthly);
-    const dpDiffCash = price * downPct / 100 - price * altDownPct / 100; // extra cash actually put down vs. alt
-    const dpFV = futureValueLumpSum(dpDiffCash, investReturnPct, saleYears);
-    const altBalanceAtSale = valueAt(altSchedule.balances, saleMonth);
-    const dpExtraBalance = Math.max(0, altBalanceAtSale - balanceAtSale);
-    const dpNet = dpFV - dpExtraBalance;
-
-    $('dpSubtitle').textContent = pct(downPct) + ' down (actual) vs. ' + pct(altDownPct) + ' down (hypothetical)';
-    $('dpDiffCash').textContent = money(dpDiffCash);
-    $('dpFV').textContent = money(dpFV);
-    $('dpExtraBalance').textContent = money(dpExtraBalance);
-    const dpVerdictEl = $('dpVerdict');
-    if (dpDiffCash <= 0) {
-      dpVerdictEl.textContent = 'No difference — down payments are equal.';
-      dpVerdictEl.className = 'verdict';
-    } else if (dpNet > 0) {
-      dpVerdictEl.textContent = 'Investing the difference comes out ahead by ' + money(dpNet);
-      dpVerdictEl.className = 'verdict good';
-    } else {
-      dpVerdictEl.textContent = 'The larger down payment comes out ahead by ' + money(-dpNet);
-      dpVerdictEl.className = 'verdict bad';
-    }
-
-    // --- investing alternative: extra monthly payments ---
-    const extraCardEl = $('extraCard');
-    if (extraMonthly > 0) {
-      extraCardEl.style.opacity = '1';
-      const noExtra = simulate(loanAmount, ratePct, termYears, 0);
-      const contribMonths = Math.min(saleMonth, main.payoffMonth);
-      const epFV = futureValueAnnuity(extraMonthly, investReturnPct, contribMonths);
-      const noExtraBalanceAtSale = valueAt(noExtra.balances, saleMonth);
-      const epExtraBalance = Math.max(0, noExtraBalanceAtSale - balanceAtSale);
-      const epNet = epFV - epExtraBalance;
-      const epContrib = extraMonthly * contribMonths;
-
-      $('epContrib').textContent = money(epContrib);
-      $('epFV').textContent = money(epFV);
-      $('epExtraBalance').textContent = money(epExtraBalance);
-      const epVerdictEl = $('epVerdict');
-      if (epNet > 0) {
-        epVerdictEl.textContent = 'Investing instead comes out ahead by ' + money(epNet);
-        epVerdictEl.className = 'verdict good';
-      } else {
-        epVerdictEl.textContent = 'Prepaying the mortgage comes out ahead by ' + money(-epNet);
-        epVerdictEl.className = 'verdict bad';
-      }
-    } else {
-      extraCardEl.style.opacity = '0.5';
-      $('epContrib').textContent = '$0';
-      $('epFV').textContent = '$0';
-      $('epExtraBalance').textContent = '$0';
-      const epVerdictEl = $('epVerdict');
-      epVerdictEl.textContent = 'Set an extra monthly payment above to compare.';
-      epVerdictEl.className = 'verdict';
-    }
-
     // --- chart (last: isolated so a failure here can't block the results above) ---
     try {
       if (typeof Chart === 'undefined') throw new Error('Chart.js failed to load');
 
-      const years = [];
-      const interestSeries = [];
-      const balanceSeries = [];
-      for (let y = 0; y <= termYears; y++) {
-        years.push(y);
-        interestSeries.push(Math.round(valueAt(main.cumInterests, y * 12)));
-        balanceSeries.push(Math.round(valueAt(main.balances, y * 12)));
+      // Net financial position vs. paying cash outright: invested lump sum
+      // (the cash freed up by financing instead of paying cash) minus the
+      // remaining loan balance, both evaluated at each year.
+      function netPosition(downPaymentPct) {
+        const loan = Math.max(0, price - price * downPaymentPct / 100);
+        const schedule = downPaymentPct === downPct ? main : simulate(loan, ratePct, termYears);
+        const series = [];
+        for (let y = 0; y <= termYears; y++) {
+          const invested = futureValueLumpSum(loan, investReturnPct, y);
+          const remaining = valueAt(schedule.balances, y * 12);
+          series.push(Math.round(invested - remaining));
+        }
+        return series;
       }
+
+      const years = [];
+      for (let y = 0; y <= termYears; y++) years.push(y);
+      const outrightSeries = years.map(() => 0);
+      const twentyPctSeries = netPosition(20);
+      const customSeries = netPosition(downPct);
 
       const saleLinePlugin = {
         id: 'saleLine',
@@ -506,20 +388,27 @@
           labels: years,
           datasets: [
             {
-              label: 'Cumulative interest paid',
-              data: interestSeries,
+              label: 'Buy outright, $' + Math.round(price).toLocaleString() + ' cash',
+              data: outrightSeries,
+              borderColor: '#8b8fa3',
+              backgroundColor: 'transparent',
+              borderDash: [3, 3],
+              tension: 0,
+              pointRadius: 0,
+            },
+            {
+              label: '20% down + invest the rest',
+              data: twentyPctSeries,
               borderColor: '#2f6fed',
-              backgroundColor: 'rgba(47,111,237,0.12)',
-              fill: true,
+              backgroundColor: 'transparent',
               tension: 0.15,
               pointRadius: 0,
             },
             {
-              label: 'Remaining loan balance',
-              data: balanceSeries,
-              borderColor: '#8b8fa3',
+              label: pct(downPct) + ' down + invest the rest',
+              data: customSeries,
+              borderColor: '#1a8a5f',
               backgroundColor: 'transparent',
-              borderDash: [3, 3],
               tension: 0.15,
               pointRadius: 0,
             }
@@ -531,7 +420,7 @@
           interaction: { mode: 'index', intersect: false },
           scales: {
             x: { title: { display: true, text: 'Years' } },
-            y: { title: { display: true, text: 'Dollars' }, ticks: { callback: (v) => '$' + v.toLocaleString() } }
+            y: { title: { display: true, text: 'Net position vs. buying outright ($)' }, ticks: { callback: (v) => '$' + v.toLocaleString() } }
           },
           plugins: { legend: { position: 'bottom' } }
         },
